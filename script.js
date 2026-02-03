@@ -40,4 +40,4 @@ class LeafletMap {
             }
             const myMap = new LeafletMap('map', [8.360286647958642, 124.86846982625842], 18);
             
-            myMap.loadMarkersFromJson('latlong.json');
+            myMap.loadMarkersFromJson('pin.json');
