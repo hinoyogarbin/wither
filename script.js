@@ -1,19 +1,20 @@
 class LeafletMap {
-    
+
     constructor(containerId, center, zoom) {
         this.map = L.map(containerId).setView(center, zoom);
-        this.initTileLayer();
+        this.initSatelliteLayer();
     }
 
-    initTileLayer() {
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(this.map);
+    initSatelliteLayer() {
+        L.tileLayer(
+            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+            {
+                maxZoom: 19,
+                attribution:
+                    'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics'
+            }
+        ).addTo(this.map);
     }
-
-   
 }
 
 const myMap = new LeafletMap('map', [8.36030503390942, 124.86816627657458], 18);
-
