@@ -21,6 +21,14 @@
             width: 800px;
            
         }
+
+        .dashboard {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    height: 100%;
+}
+
         
     </style>
     
@@ -28,11 +36,49 @@
 </head>
 
 <body>
-    <div class="applet-container">
-        <h3>Map ni Diego</h3>
-        <div id="map"></div>
+    <div class="container-fluid mt-3">
+        <div class="row">
+
+            <!-- MAP SECTION -->
+            <div class="col-md-8">
+                <h3>Map ni Diego</h3>
+                <div id="map"></div>
+            </div>
+
+            <!-- DASHBOARD SECTION -->
+            <div class="col-md-4">
+                <div class="dashboard">
+                    <h5 class="mb-3">Dashboard</h5>
+
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6 class="card-title">Temperature</h6>
+                            <p class="card-text fs-4">-- °C</p>
+                        </div>
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6 class="card-title">Humidity</h6>
+                            <p class="card-text fs-4">-- %</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="card-title">Last Update</h6>
+                            <p class="card-text">Waiting for data...</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
     </div>
-<script src="script.js"></script>
+
+    <script src="script.js"></script>
 </body>
+
 
 </html>
