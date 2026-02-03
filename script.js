@@ -14,7 +14,28 @@ class LeafletMap {
                     'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics'
             }
         ).addTo(this.map);
-    }
-}
 
-const myMap = new LeafletMap('map', [8.36030503390942, 124.86816627657458], 18);
+        
+    }
+
+  
+            addMarker(lat, lng, message) {
+                    const marker = L.marker([lat, lng]).addTo(this.map);
+                    marker.bindPopup(message);
+                }
+            
+                loadMarkersFromJson(url) {
+                    fetch(url)
+                        .then(response => response.json())
+                        .then(data => {
+                            data.forEach(marker => {
+                                this.addMarker(marker.latitude, marker.longitude, marker.message);
+                            });
+                        })
+                        .catch(error => console.error('Error loading markers:', error));
+                }
+
+            }
+            const myMap = new LeafletMap('map', [8.367881,124.865979], 18);
+            
+            myMap.loadMarkersFromJson('latlong.json');
