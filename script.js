@@ -1,22 +1,24 @@
 class LeafletMap {
 
     constructor(containerId, center, zoom) {
-        this.map = L.map(containerId).setView(center, zoom);
+        this.map = L.map(containerId, {
+    maxZoom: 19
+}).setView(center, zoom);
         this.initSatelliteLayer();
     }
 
-    initSatelliteLayer() {
-        L.tileLayer(
-            'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-            {
-                maxZoom: 19,
-                attribution:
-                    'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics'
-            }
-        ).addTo(this.map);
-
-        
-    }
+   initSatelliteLayer() {
+    L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        {
+            attribution: 'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics',
+            maxNativeZoom: 18,  
+            maxZoom: 22,        
+            tileSize: 256,
+            noWrap: true
+        }
+    ).addTo(this.map);
+}
 
   
             addMarker(lat, lng, message) {
@@ -36,6 +38,6 @@ class LeafletMap {
                 }
 
             }
-            const myMap = new LeafletMap('map', [8.367881,124.865979], 18);
+            const myMap = new LeafletMap('map', [8.360286647958642, 124.86846982625842], 18);
             
             myMap.loadMarkersFromJson('latlong.json');
