@@ -1,9 +1,12 @@
 class LeafletMap {
 
-    constructor(containerId, center, zoom) {
+     constructor(containerId, center, zoom) {
         this.map = L.map(containerId, {
-    maxZoom: 19
-}).setView(center, zoom);
+            maxZoom: 22,
+            minZoom: 3,
+            zoomControl: true
+        }).setView(center, zoom);
+
         this.initSatelliteLayer();
     }
 

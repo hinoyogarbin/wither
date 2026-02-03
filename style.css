@@ -1,0 +1,65 @@
+body {
+    margin: 0;
+}
+
+#map {
+    height: 70vh;   /* desktop & tablet */
+    width: 100%;
+}
+
+.dashboard {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    height: auto;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    #map {
+        height: 50vh;   /* tablets */
+    }
+}
+  
+@media (max-width: 576px) {
+    #map {
+        height: 40vh;   /* phones */
+    }
+}
+
+        #map {
+            height: 90vh;
+    width: 90%;
+           
+        }
+
+        .dashboard {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    height: 100%;
+}
+
+      ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #333333;
+}
+
+ul li {
+  float: left;
+}
+
+ul li a {
+  display: block;
+  color: white;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+}
+
+ul li a:hover {
+  background-color: #111111;
+}  

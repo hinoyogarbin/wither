@@ -7,47 +7,28 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="style.css">
     <title>Map</title>
-    <style>
-        .applet-container{
-            margin-top: 1rem;
-            margin-left: 2rem;
-            width: 90%;
-            text-align: left;
-        }
-
-        #map {
-            height: 100vh;
-    width: 100%;
-           
-        }
-
-        .dashboard {
-    background: #f8f9fa;
-    padding: 1rem;
-    border-radius: 8px;
-    height: 100%;
-}
-
-        
-    </style>
-    
     
 </head>
 
 <body>
+    <ul>
+  <li><a href="default.asp">Home</a></li>
+  <li><a href="contact.asp">Contact</a></li>
+  <li><a href="about.asp">About</a></li>
+</ul>
     <div class="container-fluid mt-3">
         <div class="row">
 
             <!-- MAP SECTION -->
-            <div class="col-md-8">
-                <h3>Map ni Diego</h3>
-                <div id="map"></div>
-            </div>
+         <div class="col-12 col-md-8 mb-3">
+    <h3>Map ni Diego</h3>
+    <div id="map"></div>
+</div>
 
-            <!-- DASHBOARD SECTION -->
-            <div class="col-md-4">
-                <div class="dashboard">
+<div class="col-12 col-md-4">
+    <div class="dashboard">
                     <h5 class="mb-3">Dashboard</h5>
 
                     <div class="card mb-3">
