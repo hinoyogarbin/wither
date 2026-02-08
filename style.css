@@ -6,6 +6,7 @@ body {
 #map {
     height: 500px;
     width: 100%;
+ 
 }
 
 /* DASHBOARD */
@@ -39,4 +40,7 @@ body {
   float: right;
   font-size: 22px;
   cursor: pointer;
+}
+.map-container {
+  padding: 10px;   
 }
