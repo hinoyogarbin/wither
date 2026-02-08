@@ -17,4 +17,4 @@ class LeafletMap {
     }
 }
 
-const myMap = new LeafletMap('map', [8.36030503390942, 124.86816627657458], 17);
+const myMap = new LeafletMap('map', [8.36030503390942, 124.86816627657458], 18);
