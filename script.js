@@ -9,7 +9,7 @@ class LeafletMap {
         L.tileLayer(
             'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
             {
-                maxZoom: 19,
+                maxZoom: 18,
                 attribution:
                     'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics' 
             }
