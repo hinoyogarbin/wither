@@ -1,0 +1,22 @@
+[
+    {
+        "latitude": 8.35940476463874, 
+        "longitude": 124.8684780672344,
+        "message": "NBSC Canteen"
+    },
+    {
+        "latitude": 8.359520676174068, 
+        "longitude": 124.86766785400708,
+        "message": "NBSC Spot 2"
+    },
+     {
+        "latitude": 8.359408692243594, 
+        "longitude": 124.86880759256994,
+        "message": "NBSC Spot 1"
+    },
+     {
+        "latitude": 8.359968456885905,
+        "longitude":  124.8688984529995,
+        "message": "NBSC Covered Court"
+    }
+]
