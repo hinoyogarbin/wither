@@ -18,5 +18,12 @@
         "latitude": 8.359968456885905,
         "longitude":  124.8688984529995,
         "message": "NBSC Covered Court"
+    },
+
+    {
+        "latitude": 8.359174906228988, 
+        "longitude":  124.86905432174409,
+        "message": "Lab 1"
     }
+
 ]
