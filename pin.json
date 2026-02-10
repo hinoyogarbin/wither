@@ -5,6 +5,11 @@
         "message": "NBSC Canteen"
     },
     {
+        "latitude": 8.360792, 
+        "longitude": 124.869195,
+        "message": "NBSC Spot 3"
+    },
+    {
         "latitude": 8.359520676174068, 
         "longitude": 124.86766785400708,
         "message": "NBSC Spot 2"
@@ -24,6 +29,12 @@
         "latitude": 8.359174906228988, 
         "longitude":  124.86905432174409,
         "message": "Lab 1"
+    },
+
+    {
+        "latitude": 8.360245, 
+        "longitude": 124.867474,
+        "message": "SWDC"
     }
 
 ]
