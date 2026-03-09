@@ -1,79 +1,514 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <link rel="stylesheet" href="style.css">
-    <title>Map</title>
-    
-    
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MapDiego — Field Monitor</title>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg:        #0b0f14;
+      --surface:   #111820;
+      --panel:     #161e28;
+      --border:    #1f2d3d;
+      --accent:    #00e5a0;
+      --accent2:   #0096ff;
+      --text:      #e8f0f8;
+      --muted:     #5a7080;
+      --font-head: 'Syne', sans-serif;
+      --font-mono: 'Space Mono', monospace;
+      --radius:    10px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-mono);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      height: 54px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      z-index: 1000;
+    }
+
+    .topbar-logo { display: flex; align-items: center; gap: 10px; }
+
+    .logo-icon {
+      width: 30px; height: 30px;
+      background: var(--accent);
+      border-radius: 7px;
+      display: grid; place-items: center;
+    }
+    .logo-icon svg { width: 16px; height: 16px; }
+
+    .logo-text {
+      font-family: var(--font-head);
+      font-weight: 800; font-size: 1.05rem;
+      letter-spacing: -0.4px;
+    }
+    .logo-text span { color: var(--accent); }
+
+    .topbar-status {
+      display: flex; align-items: center; gap: 12px;
+      font-size: 0.65rem; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.08em;
+    }
+
+    .status-pill {
+      display: flex; align-items: center; gap: 7px;
+      padding: 4px 11px;
+      background: rgba(0,229,160,0.07);
+      border: 1px solid rgba(0,229,160,0.18);
+      border-radius: 20px;
+      color: var(--accent);
+    }
+
+    .status-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 6px var(--accent);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    .topbar-time {
+      font-size: 0.78rem; letter-spacing: 0.12em;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 10px;
+    }
+
+    /* ── APP BODY ── */
+    .app-body { display: flex; flex: 1; overflow: hidden; }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 272px;
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      flex-shrink: 0; overflow-y: auto;
+    }
+    .sidebar::-webkit-scrollbar { width: 3px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--border); }
+
+    .sidebar-section {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .section-label {
+      font-size: 0.57rem; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--muted);
+      margin-bottom: 11px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-label::after { content:''; flex:1; height:1px; background:var(--border); }
+
+    /* Metric cards */
+    .metric-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 13px 15px;
+      margin-bottom: 8px;
+      position: relative; overflow: hidden;
+      transition: border-color .2s, transform .2s;
+    }
+    .metric-card:hover { border-color: var(--accent); transform: translateX(3px); }
+    .metric-card.humidity:hover { border-color: var(--accent2); }
+
+    .metric-card::before {
+      content: ''; position: absolute;
+      left:0; top:0; bottom:0; width:3px;
+      background: var(--accent);
+    }
+    .metric-card.humidity::before { background: var(--accent2); }
+    .metric-card.update::before   { background: var(--muted); }
+
+    .metric-label {
+      font-size: 0.58rem; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--muted);
+      margin-bottom: 5px;
+    }
+
+    .metric-value {
+      font-family: var(--font-head);
+      font-size: 1.85rem; font-weight: 800;
+      color: var(--accent); line-height: 1;
+    }
+    .metric-card.humidity .metric-value { color: var(--accent2); }
+    .metric-card.update   .metric-value { font-size:.78rem; color:var(--text); font-family:var(--font-mono); }
+    .metric-unit { font-size:.78rem; color:var(--muted); margin-left:2px; }
+
+    .sparkline {
+      display: flex; align-items: flex-end; gap: 3px;
+      height: 22px; margin-top: 7px;
+    }
+    .spark-bar { flex:1; border-radius:2px; background: var(--border); }
+    .spark-bar.last { background: var(--accent); opacity:.65; }
+    .metric-card.humidity .spark-bar.last { background: var(--accent2); }
+
+    /* Coords block */
+    .coord-block {
+      margin-top: 12px;
+      padding: 10px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.62rem; color: var(--muted); line-height: 1.9;
+    }
+    .coord-block span { color: var(--accent); font-family: var(--font-mono); }
+
+    /* ── MAP AREA ── */
+    .map-wrap { flex:1; position:relative; overflow:hidden; }
+    #map { width:100%; height:100%; }
+
+    .scan-line {
+      position: absolute; left:0; right:0; height:1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: .1; pointer-events: none; z-index: 499;
+      animation: scan 6s linear infinite;
+    }
+    @keyframes scan { from{top:0} to{top:100%} }
+
+    /* Overlay chips */
+    .map-overlay { position: absolute; z-index: 500; pointer-events: none; }
+    .map-overlay.tl { top:14px; left:14px; }
+    .map-overlay.bl { bottom:14px; left:14px; }
+
+    .overlay-chip {
+      background: rgba(11,15,20,.82);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 13px;
+      backdrop-filter: blur(10px);
+      font-size: .62rem; color: var(--muted);
+      letter-spacing: .05em; line-height: 1.7;
+    }
+    .overlay-chip strong { color: var(--accent); font-family:var(--font-head); font-size:.78rem; }
+
+    /* Toolbar */
+    .map-toolbar {
+      position: absolute; top:50%; right:14px;
+      transform: translateY(-50%);
+      z-index: 500; display: flex; flex-direction: column; gap: 5px;
+    }
+    .map-btn {
+      width:34px; height:34px;
+      background: rgba(11,15,20,.85);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: grid; place-items: center;
+      cursor: pointer; color: var(--muted); font-size: 1rem;
+      transition: all .2s; backdrop-filter: blur(8px);
+      user-select: none;
+    }
+    .map-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── LEAFLET TWEAKS ── */
+    .leaflet-control-zoom { display: none; }
+    .leaflet-control-attribution {
+      background: rgba(11,15,20,.75) !important;
+      color: var(--muted) !important;
+      font-size: .52rem !important;
+      border-radius: 6px !important;
+    }
+    .leaflet-control-attribution a { color: var(--accent) !important; }
+    .leaflet-attribution-flag { display: none !important; }
+
+    /* ── MODAL — same IDs, completely restyled ── */
+    #mapModal {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.72);
+      backdrop-filter: blur(5px);
+      z-index: 2000;
+      align-items: center; justify-content: center;
+    }
+    /* override inline display:block so it centres */
+    #mapModal[style*="display: block"],
+    #mapModal[style*="display:block"] { display: flex !important; }
+
+    #mapModal .modal-content {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 26px 26px 22px;
+      width: 440px; max-width: 92vw;
+      max-height: 78vh; overflow-y: auto;
+      position: relative;
+      box-shadow: 0 20px 60px rgba(0,0,0,.6);
+      animation: popIn .22s ease both;
+    }
+    @keyframes popIn { from{transform:scale(.93);opacity:0} to{transform:scale(1);opacity:1} }
+
+    #mapModal .modal-content::-webkit-scrollbar { width: 3px; }
+    #mapModal .modal-content::-webkit-scrollbar-thumb { background: var(--border); }
+
+    .close-btn {
+      position: absolute; top:13px; right:14px;
+      font-size: 1rem; cursor: pointer; line-height: 1;
+      color: var(--muted);
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 6px; width: 27px; height: 27px;
+      display: grid; place-items: center;
+      transition: all .2s;
+    }
+    .close-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+    #modalBody {
+      font-size: .82rem; line-height: 1.75;
+      color: var(--text);
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 680px) {
+      .app-body { flex-direction: column; }
+      .sidebar { width:100%; border-right:none; border-bottom:1px solid var(--border); }
+    }
+  </style>
 </head>
-
 <body>
-    <div class="container-fluid mt-3">
-        <div class="row">
 
-           
-            
-                <h3 style="text-align: center;">Map ni Diego</h3>
-          <!-- MAP SECTION -->
-         <div class="map-container">
-  <div id="map"></div>
-</div>
-
-            <!-- DASHBOARD SECTION -->
-            <section class="dashboard-section mt-4">
-        <div class="dashboard">
-            <h5 class="mb-3">Dashboard</h5>
-
-            <div class="row g-3">
-                <div class="col-12 col-md-4">
-                    <div class="card text-center">
-                        <div class="card-body">
-                            <h6>Temperature</h6>
-                            <p class="fs-4 mb-0">-- °C</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-12 col-md-4">
-                    <div class="card text-center">
-                        <div class="card-body">
-                            <h6>Humidity</h6>
-                            <p class="fs-4 mb-0">-- %</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-12 col-md-4">
-                    <div class="card text-center">
-                        <div class="card-body">
-                            <h6>Last Update</h6>
-                            <p class="mb-0">Waiting for data...</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-            </div>
-
-        </div>
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#0b0f14" stroke-width="2.5"
+             stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="10" r="3"/>
+          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+        </svg>
+      </div>
+      <span class="logo-text">Wit<span>her</span></span>
     </div>
 
-<div id="mapModal" class="modal">
-  <div class="modal-content">
-    <span class="close-btn">&times;</span>
-    <div id="modalBody"></div>
+    <div class="topbar-status">
+      <div class="status-pill">
+        <div class="status-dot"></div>
+        <span>Live Feed</span>
+      </div>
+      <span style="color:var(--border)">|</span>
+      <span>Field Monitor</span>
+    </div>
+
+    <div class="topbar-time" id="clock">--:--:--</div>
+  </header>
+
+  <!-- MAIN -->
+  <div class="app-body">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+      <div class="sidebar-section">
+        <div class="section-label">Sensor Data</div>
+
+        <div class="metric-card temperature">
+          <div class="metric-label">Temperature</div>
+          <div class="metric-value" id="temp-val">--<span class="metric-unit">°C</span></div>
+          <div class="sparkline" id="temp-spark"></div>
+        </div>
+
+        <div class="metric-card humidity">
+          <div class="metric-label">Humidity</div>
+          <div class="metric-value" id="humid-val">--<span class="metric-unit">%</span></div>
+          <div class="sparkline" id="humid-spark"></div>
+        </div>
+
+        <div class="metric-card update">
+          <div class="metric-label">Last Update</div>
+          <div class="metric-value" id="update-val">Waiting for data...</div>
+        </div>
+      </div>
+
+      <div class="sidebar-section" style="flex:1">
+        <div class="section-label">Map Info</div>
+        <div style="font-size:.67rem;color:var(--muted);line-height:1.8">
+          <span style="color:var(--text)">Zoom</span>
+          <span id="zoom-side" style="color:var(--accent);font-family:var(--font-mono)"> 18</span>
+          &nbsp;·&nbsp;
+          <span style="color:var(--text)">Layer</span>
+          <span style="color:var(--accent)"> ESRI SAT</span>
+        </div>
+        <div class="coord-block">
+          LAT &nbsp;<span id="lat-side">8.36031°</span><br>
+          LNG &nbsp;<span id="lng-side">124.86817°</span>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- MAP -->
+    <div class="map-wrap">
+      <div class="scan-line"></div>
+
+      <div class="map-overlay tl">
+        <div class="overlay-chip">
+          <strong id="coord-top">8.36031°N &nbsp;124.86817°E</strong><br>
+          Manolo Fortich, Bukidnon
+        </div>
+      </div>
+
+      <div class="map-overlay bl">
+        <div class="overlay-chip">
+          Zoom <strong id="zoom-top">18</strong> &nbsp;·&nbsp; ESRI Satellite
+        </div>
+      </div>
+
+      <div id="map"></div>
+
+      <div class="map-toolbar">
+        <div class="map-btn" id="btn-in"   title="Zoom In">＋</div>
+        <div class="map-btn" id="btn-out"  title="Zoom Out">－</div>
+        <div class="map-btn" id="btn-home" title="Re-center">⌖</div>
+      </div>
+    </div>
+
+  </div><!-- /.app-body -->
+
+  <!-- MODAL — same IDs your script expects -->
+  <div id="mapModal">
+    <div class="modal-content">
+      <span class="close-btn">&times;</span>
+      <div id="modalBody"></div>
+    </div>
   </div>
-</div>
-    <script src="script.js"></script>
-    <script src="modalPins.js"></script>
+
+  <!-- ── YOUR ORIGINAL LeafletMap CLASS — UNTOUCHED ── -->
+  <script>
+    class LeafletMap {
+
+      constructor(containerId, center, zoom) {
+        this.map = L.map(containerId).setView(center, zoom);
+        this.initSatelliteLayer();
+      }
+
+      initSatelliteLayer() {
+        L.tileLayer(
+          'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+          {
+            maxZoom: 18,
+            attribution: 'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics'
+          }
+        ).addTo(this.map);
+      }
+
+      addMarker(lat, lng, message) {
+        const marker = L.marker([lat, lng]).addTo(this.map);
+        marker.on('click', () => {
+          this.openModal(message);
+        });
+      }
+
+      loadMarkersFromJson(url) {
+        fetch(url)
+          .then(response => response.json())
+          .then(data => {
+            data.forEach(marker => {
+              this.addMarker(marker.latitude, marker.longitude, marker.message);
+            });
+          })
+          .catch(error => console.error('Error loading markers:', error));
+      }
+
+      openModal(content) {
+        const modal     = document.getElementById("mapModal");
+        const modalBody = document.getElementById("modalBody");
+        const closeBtn  = document.querySelector(".close-btn");
+
+        modalBody.innerHTML = content;
+        modal.style.display = "block";
+
+        closeBtn.onclick = () => { modal.style.display = "none"; };
+        window.onclick   = (e) => { if (e.target === modal) modal.style.display = "none"; };
+      }
+    }
+
+    const myMap = new LeafletMap('map', [8.36030503390942, 124.86816627657458], 18);
+    myMap.loadMarkersFromJson('pin.json');
+  </script>
+
+  <!-- ── UI ENHANCEMENTS — clock, overlays, toolbar, sensor sim ── -->
+  <script>
+    /* Clock */
+    const tick = () => {
+      document.getElementById('clock').textContent =
+        new Date().toLocaleTimeString('en-US', { hour12: false });
+    };
+    setInterval(tick, 1000); tick();
+
+    /* Live map overlays */
+    const lmap = myMap.map;
+
+    const updateOverlays = () => {
+      const c = lmap.getCenter(), z = lmap.getZoom();
+      document.getElementById('coord-top').textContent  = `${c.lat.toFixed(5)}°N  ${c.lng.toFixed(5)}°E`;
+      document.getElementById('zoom-top').textContent   = z;
+      document.getElementById('zoom-side').textContent  = ' ' + z;
+      document.getElementById('lat-side').textContent   = c.lat.toFixed(5) + '°';
+      document.getElementById('lng-side').textContent   = c.lng.toFixed(5) + '°';
+    };
+    lmap.on('move zoom moveend zoomend', updateOverlays);
+    updateOverlays();
+
+    /* Toolbar */
+    document.getElementById('btn-in').onclick   = () => lmap.zoomIn();
+    document.getElementById('btn-out').onclick  = () => lmap.zoomOut();
+    document.getElementById('btn-home').onclick = () =>
+      lmap.setView([8.36030503390942, 124.86816627657458], 18);
+
+    /* Sparklines */
+    ['temp-spark', 'humid-spark'].forEach((id, idx) => {
+      const el   = document.getElementById(id);
+      const vals = Array.from({ length: 14 }, () => Math.random());
+      const max  = Math.max(...vals);
+      vals.forEach((v, i) => {
+        const b = document.createElement('div');
+        b.className = 'spark-bar' + (i === vals.length - 1 ? ' last' : '');
+        b.style.height = Math.round((v / max) * 100) + '%';
+        el.appendChild(b);
+      });
+    });
+
+    /* Simulated sensor — swap in your real data source */
+    const refreshSensor = () => {
+      const t = (24 + Math.random() * 8).toFixed(1);
+      const h = (60 + Math.random() * 25).toFixed(1);
+      document.getElementById('temp-val').innerHTML  = `${t}<span class="metric-unit">°C</span>`;
+      document.getElementById('humid-val').innerHTML = `${h}<span class="metric-unit">%</span>`;
+      document.getElementById('update-val').textContent =
+        new Date().toLocaleTimeString('en-US', { hour12: false });
+    };
+    refreshSensor();
+    setInterval(refreshSensor, 5000);
+  </script>
+
+  <!-- <script src="modalPins.js"></script> -->
+
 </body>
-
-
 </html>
