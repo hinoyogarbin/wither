@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wither — Field Monitor</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #f5f4f0;
+      color: #1a1a1a;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* HEADER */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      height: 52px;
+      background: #fff;
+      border-bottom: 1px solid #e5e3de;
+      flex-shrink: 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .brand-icon {
+      width: 28px; height: 28px;
+      background: #1a1a1a;
+      border-radius: 6px;
+      display: grid; place-items: center;
+    }
+    .brand-icon svg { width: 14px; height: 14px; }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: #666;
+    }
+    .live-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #22c55e;
+    }
+
+    #clock {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.8rem;
+      color: #888;
+    }
+
+    /* LAYOUT */
+ .app{
+  display:flex;
+  flex-direction:column;
+  height:100vh;
+  width:100%;
+}
+
+.app-top{
+  display:flex;
+  flex:1;
+  min-height:0;
+}
+
+    /* BOTTOM CHART BAR */
+    .chart-bar {
+      min-height:110px;
+  height:18vh;
+  max-height:180px;
+      flex-shrink: 0;
+      background: #fff;
+      border-top: 1px solid #e5e3de;
+      display: flex;
+      align-items: stretch;
+      padding: 12px 20px;
+      gap: 24px;
+    }
+
+    /* MONITORING LOG */
+    .log-bar {
+        height:22vh;
+  min-height:140px;
+  max-height:220px;
+      flex-shrink: 0;
+      background: #fff;
+      border-top: 1px solid #e5e3de;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .log-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 20px 8px;
+      border-bottom: 1px solid #f0ede8;
+      flex-shrink: 0;
+    }
+
+    .log-title {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
+    .log-count {
+      font-size: 0.62rem;
+      color: #bbb;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .log-table-wrap {
+      flex: 1;
+      overflow-y: auto;
+    }
+    .log-table-wrap::-webkit-scrollbar { width: 3px; }
+    .log-table-wrap::-webkit-scrollbar-thumb { background: #e5e3de; border-radius: 3px; }
+
+    .log-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.75rem;
+    }
+
+    .log-table thead tr {
+      background: #faf9f7;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    .log-table th {
+      text-align: left;
+      padding: 6px 20px;
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: #aaa;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid #f0ede8;
+    }
+
+    .log-table td {
+      padding: 6px 20px;
+      color: #333;
+      border-bottom: 1px solid #f7f5f2;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+    }
+
+    .log-table tbody tr:first-child td { color: #1a1a1a; font-weight: 500; }
+    .log-table tbody tr:hover td { background: #faf9f7; }
+
+    .chart-panel {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .chart-name { font-size: 0.65rem; color: #999; margin-bottom: 5px; font-weight: 500; }
+    .chart-panel canvas { flex: 1; min-height: 0; }
+
+    .chart-divider { width: 1px; background: #f0ede8; flex-shrink: 0; }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 240px;
+      background: #fff;
+      border-right: 1px solid #e5e3de;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: #e5e3de; border-radius: 4px; }
+
+    .sidebar-block {
+      padding: 18px 18px 16px;
+      border-bottom: 1px solid #f0ede8;
+    }
+
+    .block-label {
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #aaa;
+      margin-bottom: 14px;
+    }
+
+    /* Readings */
+    .reading {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      gap: 8px;
+    }
+    .reading:last-of-type { margin-bottom: 0; }
+
+    .reading-label { font-size: 0.8rem; color: #666; }
+    .reading-sub   { font-size: 0.68rem; color: #bbb; margin-top: 3px; }
+
+    .reading-right { text-align: right; }
+
+    .reading-value {
+      font-family: 'DM Mono', monospace;
+      font-size: 1.4rem;
+      font-weight: 500;
+      color: #1a1a1a;
+      transition: color .3s;
+    }
+    .reading-value.flash { color: #22c55e; }
+    .reading-unit { font-size: 0.72rem; color: #aaa; margin-left: 2px; }
+
+    .reading-ts {
+      font-size: 0.64rem;
+      color: #bbb;
+      margin-top: 3px;
+      font-family: 'DM Mono', monospace;
+    }
+    .reading-ts .ts-time { color: #999; }
+
+    /* Location */
+    .coord-pair {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.72rem;
+      color: #666;
+      line-height: 2;
+    }
+    .coord-pair strong { color: #1a1a1a; }
+
+    /* MAP */
+   .map-wrap{
+  flex:1;
+  position:relative;
+  min-height:0;
+  display:flex;
+}
+
+#map{
+  flex:1;
+  width:100%;
+  height:100%;
+}
+
+    .map-chip {
+      position: absolute;
+      z-index: 500;
+      background: rgba(255,255,255,0.92);
+      border: 1px solid #e5e3de;
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-size: 0.72rem;
+      color: #666;
+      backdrop-filter: blur(6px);
+      line-height: 1.6;
+      pointer-events: none;
+    }
+    .map-chip strong { color: #1a1a1a; font-weight: 600; }
+    .map-chip.tl { top: 14px; left: 14px; }
+    .map-chip.bl { bottom: 14px; left: 14px; }
+
+    .map-toolbar {
+      position: absolute;
+      top: 50%; right: 14px;
+      transform: translateY(-50%);
+      z-index: 500;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .map-btn {
+      width: 32px; height: 32px;
+      background: #fff;
+      border: 1px solid #e5e3de;
+      border-radius: 7px;
+      display: grid; place-items: center;
+      cursor: pointer;
+      font-size: 1.1rem;
+      color: #666;
+      transition: border-color .15s, color .15s;
+      user-select: none;
+    }
+    .map-btn:hover { border-color: #1a1a1a; color: #1a1a1a; }
+
+    /* Leaflet */
+    .leaflet-control-zoom { display: none; }
+    .leaflet-control-attribution {
+      background: rgba(255,255,255,.85) !important;
+      font-size: .55rem !important;
+      border-radius: 5px !important;
+    }
+    .leaflet-attribution-flag { display: none !important; }
+
+    /* MODAL */
+    #mapModal {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.3);
+      backdrop-filter: blur(3px);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+    }
+    #mapModal[style*="display: block"],
+    #mapModal[style*="display:block"] { display: flex !important; }
+
+    .modal-box {
+      background: #fff;
+      border: 1px solid #e5e3de;
+      border-radius: 12px;
+      padding: 24px;
+      width: 420px; max-width: 92vw;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+      box-shadow: 0 8px 32px rgba(0,0,0,.1);
+    }
+
+    .modal-close {
+      position: absolute; top: 14px; right: 14px;
+      width: 26px; height: 26px;
+      border: 1px solid #e5e3de;
+      border-radius: 6px;
+      background: #f5f4f0;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: #888;
+      display: grid; place-items: center;
+      transition: all .15s;
+    }
+    .modal-close:hover { border-color: #1a1a1a; color: #1a1a1a; }
+
+    #modalBody { font-size: 0.85rem; line-height: 1.7; color: #333; }
+    #modalBody h2 { font-size: 1rem; font-weight: 600; margin-bottom: 10px; }
+    #modalBody h3 { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: #aaa; margin: 16px 0 8px; }
+    #modalBody img { border-radius: 7px; width: 100%; margin-bottom: 8px; display: block; }
+
+@media (max-width:1000px){
+
+.sidebar{
+width:200px;
+}
+
+.chart-bar{
+height:16vh;
+}
+
+.log-bar{
+height:20vh;
+}
+
+
+    }
+    @media (max-width:768px){
+
+.app-top{
+flex-direction:column;
+}
+
+.sidebar{
+width:100%;
+border-right:none;
+border-bottom:1px solid #e5e3de;
+max-height:35vh;
+}
+
+.map-wrap{
+height:75vh;
+}
+
+.chart-bar{
+flex-direction:column;
+height:auto;
+gap:10px;
+}
+
+.chart-divider{
+display:none;
+}
+
+.chart-panel{
+height:90px;
+}
+
+.log-bar{
+height:30vh;
+}
+
+}
+
+
+@media (max-width:480px){
+
+header{
+height:48px;
+padding:0 12px;
+}
+
+.brand{
+font-size:.85rem;
+}
+
+.sidebar-block{
+padding:14px;
+}
+
+.reading-value{
+font-size:1.2rem;
+}
+
+.chart-panel{
+height:70px;
+}
+
+.map-chip{
+font-size:.65rem;
+padding:5px 8px;
+}
+
+.map-btn{
+width:28px;
+height:28px;
+font-size:.9rem;
+}
+
+}
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="brand-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="10" r="3"/>
+        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+      </svg>
+    </div>
+    Wither
+  </div>
+
+</header>
+
+<div class="app">
+  <div class="app-top">
+
+  <aside class="sidebar">
+
+    <div class="sidebar-block">
+      <div class="block-label">Sensor Readings</div>
+
+      <div class="reading">
+        <div>
+          <div class="reading-label">Temperature</div>
+          <div class="reading-ts" id="temp-ts">—</div>
+        </div>
+        <div class="reading-right">
+          <div class="reading-value" id="temp-val">--<span class="reading-unit">°C</span></div>
+          <div class="reading-sub" id="temp-ago">waiting…</div>
+        </div>
+      </div>
+
+      <div class="reading">
+        <div>
+          <div class="reading-label">Humidity</div>
+          <div class="reading-ts" id="humid-ts">—</div>
+        </div>
+        <div class="reading-right">
+          <div class="reading-value" id="humid-val">--<span class="reading-unit">%</span></div>
+          <div class="reading-sub" id="humid-ago">waiting…</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-block">
+      <div class="block-label">Location</div>
+      <div class="coord-pair">
+        Lat &nbsp;<strong id="lat-side">8.36031°</strong><br>
+        Lng &nbsp;<strong id="lng-side">124.86817°</strong><br>
+        Zoom &nbsp;<strong id="zoom-side">18</strong>
+      </div>
+    </div>
+
+  </aside>
+
+  <div class="map-wrap">
+
+    <div class="map-chip tl">
+      <strong id="coord-top">8.36031°N · 124.86817°E</strong><br>
+      Manolo Fortich, Bukidnon
+    </div>
+
+    <div class="map-chip bl">
+      Zoom <strong id="zoom-top">18</strong> · ESRI Satellite
+    </div>
+
+    <div id="map"></div>
+
+    <div class="map-toolbar">
+      <div class="map-btn" id="btn-in"   title="Zoom in">+</div>
+      <div class="map-btn" id="btn-out"  title="Zoom out">−</div>
+      <div class="map-btn" id="btn-home" title="Re-center">⌖</div>
+    </div>
+  </div>
+
+  </div><!-- /.app-top -->
+
+  <!-- BOTTOM CHART BAR (live, last 20 pts) -->
+  <div class="chart-bar">
+    <div class="chart-panel">
+      <div class="chart-name">Temperature (°C)</div>
+      <canvas id="tempChart"></canvas>
+    </div>
+    <div class="chart-divider"></div>
+    <div class="chart-panel">
+      <div class="chart-name">Humidity (%)</div>
+      <canvas id="humidChart"></canvas>
+    </div>
+  </div>
+
+  <!-- MONITORING LOG -->
+  <div class="log-bar">
+    <div class="log-header">
+      <span class="log-title">Monitoring Log</span>
+      <span class="log-count" id="log-count">0 entries</span>
+    </div>
+    <div class="log-table-wrap">
+      <table class="log-table">
+        <thead>
+          <tr>
+            <th>Temperature (°C)</th>
+            <th>Humidity (%)</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody id="log-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<div id="mapModal">
+  <div class="modal-box">
+    <div class="modal-close" id="modal-close-btn">✕</div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+  class LeafletMap {
+    constructor(id, center, zoom) {
+      this.map = L.map(id).setView(center, zoom);
+      L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        { maxZoom: 18, attribution: 'Tiles © Esri' }
+      ).addTo(this.map);
+    }
+    addMarker(lat, lng, data) {
+      const m = L.marker([lat, lng]).addTo(this.map);
+      m.bindPopup(`
+        <div style="font-family:'DM Sans',sans-serif;text-align:center;min-width:140px;font-size:13px;line-height:1.6">
+          <strong>${data.name}</strong><br><br>
+          🌡️ ${data.temp}°C &nbsp;·&nbsp; 💧 ${data.humidity}%<br><br>
+          <button onclick='showDetails(${JSON.stringify(data)})'
+            style="padding:5px 14px;border:1px solid #1a1a1a;background:#1a1a1a;
+                   color:#fff;border-radius:5px;cursor:pointer;font-size:12px;">
+            Details
+          </button>
+        </div>`, { offset: [0, -20] });
+    }
+    loadMarkersFromJson(url) {
+      fetch(url)
+        .then(r => r.json())
+        .then(data => data.forEach(m => this.addMarker(m.latitude, m.longitude, m.message)))
+        .catch(() => {});
+    }
+  }
+
+  function showDetails(data) {
+    let imgs = '';
+    if (data.images) data.images.forEach(s => { imgs += `<img src="${s}">`; });
+    document.getElementById('modalBody').innerHTML = `
+      <h2>${data.name}</h2>
+      <p>Temperature: <strong>${data.temp}°C</strong><br>
+         Humidity: <strong>${data.humidity}%</strong></p>
+      ${imgs ? '<h3>Photos</h3>' + imgs : ''}`;
+    document.getElementById('mapModal').style.display = 'block';
+  }
+
+  const myMap = new LeafletMap('map', [8.36030503390942, 124.86816627657458], 18);
+  myMap.loadMarkersFromJson('pin.json');
+</script>
+
+<script>
+  /* Clock */
+  setInterval(() => {
+    document.getElementById('clock').textContent =
+      new Date().toLocaleTimeString('en-PH', { hour12: true, timeZone: 'Asia/Manila', hour: 'numeric', minute: '2-digit', second: '2-digit' });
+  }, 1000);
+
+  /* Charts */
+  function makeChart(id, color) {
+    return new Chart(document.getElementById(id), {
+      type: 'line',
+      data: { labels: [], datasets: [{ data: [], borderColor: color,
+        backgroundColor: color + '15', borderWidth: 1.5, fill: true,
+        tension: 0.4, pointRadius: 0 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { display: false },
+          y: { ticks: { color: '#bbb', font: { size: 9, family: 'DM Mono' } },
+               grid: { color: '#f0ede8' } }
+        },
+        animation: { duration: 250 }
+      }
+    });
+  }
+
+  const tempChart  = makeChart('tempChart',  '#ef4444');
+  const humidChart = makeChart('humidChart', '#3b82f6');
+
+  let logCount = 0;
+
+  function addLogRow(temp, humidity, time) {
+    const tbody = document.getElementById('log-tbody');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${parseFloat(temp).toFixed(1)}</td><td>${parseFloat(humidity).toFixed(1)}</td><td>${time}</td>`;
+    tbody.insertBefore(tr, tbody.firstChild);
+    logCount++;
+    document.getElementById('log-count').textContent = `${logCount} entr${logCount !== 1 ? 'ies' : 'y'}`;
+  }
+
+  function pushChart(chart, val) {
+    const t = new Date().toLocaleTimeString('en-PH', { hour12: true, timeZone: 'Asia/Manila', hour: 'numeric', minute: '2-digit', second: '2-digit' });
+    chart.data.labels.push(t);
+    chart.data.datasets[0].data.push(val);
+    if (chart.data.labels.length > 20) {
+      chart.data.labels.shift();
+      chart.data.datasets[0].data.shift();
+    }
+    chart.update();
+  }
+
+  /* Per-reading timestamps */
+  let lastTempTime = null, lastHumidTime = null;
+
+  function flash(id) {
+    const el = document.getElementById(id);
+    el.classList.add('flash');
+    setTimeout(() => el.classList.remove('flash'), 600);
+  }
+
+  function fmtTime(d) {
+    return d.toLocaleTimeString('en-PH', { hour12: true, timeZone: 'Asia/Manila', hour: 'numeric', minute: '2-digit', second: '2-digit' });
+  }
+
+  function relativeAgo(d) {
+    if (!d) return '—';
+    const secs = Math.floor((Date.now() - d) / 1000);
+    if (secs < 5)  return 'just now';
+    if (secs < 60) return `${secs}s ago`;
+    const mins = Math.floor(secs / 60);
+    return `${mins}m ago`;
+  }
+
+  function updateDisplay(temp, humidity) {
+    const now = new Date();
+
+    // Temperature
+    lastTempTime = now;
+    document.getElementById('temp-val').innerHTML = `${parseFloat(temp).toFixed(1)}<span class="reading-unit">°C</span>`;
+    document.getElementById('temp-ts').innerHTML  = `<span class="ts-time">${fmtTime(now)}</span>`;
+    document.getElementById('temp-ago').textContent = 'just now';
+    flash('temp-val');
+
+    // Humidity
+    lastHumidTime = now;
+    document.getElementById('humid-val').innerHTML = `${parseFloat(humidity).toFixed(1)}<span class="reading-unit">%</span>`;
+    document.getElementById('humid-ts').innerHTML  = `<span class="ts-time">${fmtTime(now)}</span>`;
+    document.getElementById('humid-ago').textContent = 'just now';
+    flash('humid-val');
+
+    pushChart(tempChart,  parseFloat(temp));
+    pushChart(humidChart, parseFloat(humidity));
+
+    addLogRow(temp, humidity, fmtTime(now));
+  }
+
+  const sessionStart = new Date().toLocaleTimeString('en-PH', { hour12: true, timeZone: 'Asia/Manila', hour: 'numeric', minute: '2-digit', second: '2-digit' });
+
+  /* Tick relative times every second */
+  setInterval(() => {
+    if (lastTempTime)  document.getElementById('temp-ago').textContent  = relativeAgo(lastTempTime);
+    if (lastHumidTime) document.getElementById('humid-ago').textContent = relativeAgo(lastHumidTime);
+  }, 1000);
+
+  let pollTimer = null;
+
+  function startPolling(fn) {
+    if (pollTimer) clearInterval(pollTimer);
+    fn(); pollTimer = setInterval(fn, 5000);
+  }
+
+  function demoTick() {
+    updateDisplay((24 + Math.random() * 8).toFixed(1), (60 + Math.random() * 25).toFixed(1));
+  }
+
+  startPolling(demoTick);
+
+  /* Map overlays */
+  const lmap = myMap.map;
+  function syncOverlays() {
+    const c = lmap.getCenter(), z = lmap.getZoom();
+    document.getElementById('coord-top').textContent = `${c.lat.toFixed(5)}°N · ${c.lng.toFixed(5)}°E`;
+    document.getElementById('zoom-top').textContent  = z;
+    document.getElementById('zoom-side').textContent = z;
+    document.getElementById('lat-side').textContent  = c.lat.toFixed(5) + '°';
+    document.getElementById('lng-side').textContent  = c.lng.toFixed(5) + '°';
+  }
+  lmap.on('move zoom moveend zoomend', syncOverlays);
+  syncOverlays();
+
+  document.getElementById('btn-in').onclick   = () => lmap.zoomIn();
+  document.getElementById('btn-out').onclick  = () => lmap.zoomOut();
+  document.getElementById('btn-home').onclick = () =>
+    lmap.setView([8.36030503390942, 124.86816627657458], 18);
+
+  function closeModal() { document.getElementById('mapModal').style.display = 'none'; }
+  document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+  window.addEventListener('click', e => {
+    if (e.target === document.getElementById('mapModal')) closeModal();
+  });
+</script>
+
+</body>
+</html>

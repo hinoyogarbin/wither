@@ -13,6 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
     :root {
@@ -102,16 +103,30 @@
     }
 
     /* ── APP BODY ── */
-    .app-body { display: flex; flex: 1; overflow: hidden; }
+   .app-body { display: flex; flex: 1; overflow: hidden; }
+.sidebar {
+  width: 272px;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+}
+.app-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
 
-    /* ── SIDEBAR ── */
-    .sidebar {
-      width: 272px;
-      background: var(--panel);
-      border-right: 1px solid var(--border);
-      display: flex; flex-direction: column;
-      flex-shrink: 0; overflow-y: auto;
-    }
+.sidebar {
+  width: 300px;
+  background: #ffffff;
+  color: #333;
+  border-left: 1px solid #ddd;
+  order: 2;
+}
+
+.map-wrap {
+  flex: 1;
+  order: 1;
+}
     .sidebar::-webkit-scrollbar { width: 3px; }
     .sidebar::-webkit-scrollbar-thumb { background: var(--border); }
 
@@ -130,48 +145,23 @@
 
     /* Metric cards */
     .metric-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 13px 15px;
-      margin-bottom: 8px;
-      position: relative; overflow: hidden;
-      transition: border-color .2s, transform .2s;
-    }
-    .metric-card:hover { border-color: var(--accent); transform: translateX(3px); }
-    .metric-card.humidity:hover { border-color: var(--accent2); }
+  background: #f8f8f8;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 10px;
+}
 
-    .metric-card::before {
-      content: ''; position: absolute;
-      left:0; top:0; bottom:0; width:3px;
-      background: var(--accent);
-    }
-    .metric-card.humidity::before { background: var(--accent2); }
-    .metric-card.update::before   { background: var(--muted); }
+.metric-label {
+  font-size: 12px;
+  color: #777;
+}
 
-    .metric-label {
-      font-size: 0.58rem; letter-spacing: 0.1em;
-      text-transform: uppercase; color: var(--muted);
-      margin-bottom: 5px;
-    }
-
-    .metric-value {
-      font-family: var(--font-head);
-      font-size: 1.85rem; font-weight: 800;
-      color: var(--accent); line-height: 1;
-    }
-    .metric-card.humidity .metric-value { color: var(--accent2); }
-    .metric-card.update   .metric-value { font-size:.78rem; color:var(--text); font-family:var(--font-mono); }
-    .metric-unit { font-size:.78rem; color:var(--muted); margin-left:2px; }
-
-    .sparkline {
-      display: flex; align-items: flex-end; gap: 3px;
-      height: 22px; margin-top: 7px;
-    }
-    .spark-bar { flex:1; border-radius:2px; background: var(--border); }
-    .spark-bar.last { background: var(--accent); opacity:.65; }
-    .metric-card.humidity .spark-bar.last { background: var(--accent2); }
-
+.metric-value {
+  font-size: 26px;
+  font-weight: bold;
+  color: #333;
+}
     /* Coords block */
     .coord-block {
       margin-top: 12px;
@@ -325,6 +315,16 @@
     <!-- SIDEBAR -->
     <aside class="sidebar">
 
+      <div style="padding:10px">
+
+<canvas id="tempChart"></canvas>
+
+<br>
+
+<canvas id="humidChart"></canvas>
+
+</div>
+
       <div class="sidebar-section">
         <div class="section-label">Sensor Data</div>
 
@@ -398,6 +398,7 @@
       <div id="modalBody"></div>
     </div>
   </div>
+  
 
   <!-- ── YOUR ORIGINAL LeafletMap CLASS — UNTOUCHED ── -->
   <script>
@@ -418,13 +419,28 @@
         ).addTo(this.map);
       }
 
-      addMarker(lat, lng, message) {
-        const marker = L.marker([lat, lng]).addTo(this.map);
-        marker.on('click', () => {
-          this.openModal(message);
-        });
-      }
+    addMarker(lat, lng, data) {
 
+  const marker = L.marker([lat, lng]).addTo(this.map);
+
+  const popupContent = `
+  <div style="text-align:center; min-width:160px;">
+      <b>${data.name}</b><br><br>
+
+      🌡️ Temp: <b>${data.temp}°C</b><br>
+      💧 Humidity: <b>${data.humidity}%</b><br><br>
+
+      <button onclick='showDetails(${JSON.stringify(data)})'
+      style="padding:6px 10px; border:none; background:#0096ff; color:white; border-radius:5px;">
+      More Info
+      </button>
+  </div>
+  `;
+
+  marker.bindPopup(popupContent, {
+    offset: [0, -20]
+  });
+}
       loadMarkersFromJson(url) {
         fetch(url)
           .then(response => response.json())
@@ -448,6 +464,43 @@
         window.onclick   = (e) => { if (e.target === modal) modal.style.display = "none"; };
       }
     }
+    const tempChart = new Chart(
+document.getElementById('tempChart'),
+{
+type:'line',
+data:{
+labels:["1","2","3","4","5"],
+datasets:[{
+label:"Temperature (°C)",
+data:[28,29,30,29,31],
+borderWidth:2,
+fill:false
+}]
+},
+options:{
+responsive:true
+}
+}
+);
+
+const humidChart = new Chart(
+document.getElementById('humidChart'),
+{
+type:'line',
+data:{
+labels:["1","2","3","4","5"],
+datasets:[{
+label:"Humidity (%)",
+data:[70,72,71,75,74],
+borderWidth:2,
+fill:false
+}]
+},
+options:{
+responsive:true
+}
+}
+);
 
     const myMap = new LeafletMap('map', [8.36030503390942, 124.86816627657458], 18);
     myMap.loadMarkersFromJson('pin.json');
@@ -494,6 +547,32 @@
         el.appendChild(b);
       });
     });
+    function showDetails(data) {
+
+const modal = document.getElementById("mapModal");
+
+let imagesHTML = "";
+
+data.images.forEach(img=>{
+imagesHTML += `<img src="${img}" style="width:100%; margin-bottom:8px; border-radius:6px;">`
+})
+
+document.getElementById("modalBody").innerHTML = `
+<h2>${data.name}</h2>
+
+<p>
+Temperature: <b>${data.temp}°C</b><br>
+Humidity: <b>${data.humidity}%</b>
+</p>
+
+<h3>Location Photos</h3>
+
+${imagesHTML}
+
+`;
+
+modal.style.display = "block";
+}
 
     /* Simulated sensor — swap in your real data source */
     const refreshSensor = () => {
