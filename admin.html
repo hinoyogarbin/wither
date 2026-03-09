@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wither — Admin Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg:        #0b0f14;
+      --surface:   #111820;
+      --panel:     #161e28;
+      --panel2:    #1a2433;
+      --border:    #1f2d3d;
+      --border2:   #253547;
+      --accent:    #00e5a0;
+      --accent2:   #0096ff;
+      --accent3:   #ff6b35;
+      --accent4:   #c084fc;
+      --text:      #e8f0f8;
+      --muted:     #5a7080;
+      --muted2:    #3d5468;
+      --font-head: 'Syne', sans-serif;
+      --font-mono: 'Space Mono', monospace;
+      --radius:    10px;
+      --danger:    #ff4757;
+      --warn:      #ffa502;
+      --success:   #00e5a0;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-mono);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      height: 54px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      z-index: 1000;
+    }
+    .topbar-logo { display: flex; align-items: center; gap: 10px; }
+    .logo-icon {
+      width: 30px; height: 30px;
+      background: var(--accent);
+      border-radius: 7px;
+      display: grid; place-items: center;
+    }
+    .logo-icon svg { width: 16px; height: 16px; }
+    .logo-text {
+      font-family: var(--font-head);
+      font-weight: 800; font-size: 1.05rem;
+      letter-spacing: -0.4px;
+    }
+    .logo-text span { color: var(--accent); }
+    .topbar-center {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(255,107,53,0.08);
+      border: 1px solid rgba(255,107,53,0.22);
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 0.62rem; color: var(--accent3);
+      letter-spacing: 0.12em; text-transform: uppercase;
+    }
+    .admin-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent3);
+      box-shadow: 0 0 6px var(--accent3);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .topbar-time {
+      font-size: 0.78rem; letter-spacing: 0.12em;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 10px;
+    }
+    .admin-avatar {
+      width: 30px; height: 30px;
+      background: linear-gradient(135deg, var(--accent3), var(--accent4));
+      border-radius: 50%;
+      display: grid; place-items: center;
+      font-size: 0.6rem; font-weight: 700;
+      color: #fff; cursor: pointer;
+      border: 2px solid var(--border);
+    }
+
+    /* ── MAIN LAYOUT ── */
+    .app-body { display: flex; flex: 1; overflow: hidden; }
+
+    /* ── NAV SIDEBAR ── */
+    .nav-sidebar {
+      width: 58px;
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      align-items: center;
+      padding: 12px 0;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      width: 38px; height: 38px;
+      border-radius: 9px;
+      display: grid; place-items: center;
+      cursor: pointer; color: var(--muted);
+      transition: all .2s; border: 1px solid transparent;
+      font-size: 1.1rem; position: relative;
+    }
+    .nav-btn:hover { color: var(--text); background: var(--surface); border-color: var(--border); }
+    .nav-btn.active { color: var(--accent); background: rgba(0,229,160,0.08); border-color: rgba(0,229,160,0.2); }
+    .nav-btn .nav-tooltip {
+      position: absolute; left: 52px; top: 50%; transform: translateY(-50%);
+      background: var(--panel2); border: 1px solid var(--border);
+      border-radius: 6px; padding: 4px 10px;
+      font-size: 0.58rem; white-space: nowrap; color: var(--text);
+      opacity: 0; pointer-events: none; transition: opacity .15s;
+      letter-spacing: 0.05em;
+    }
+    .nav-btn:hover .nav-tooltip { opacity: 1; }
+    .nav-divider { width: 30px; height: 1px; background: var(--border); margin: 4px 0; }
+
+    /* ── MAIN CONTENT ── */
+    .main-content { flex: 1; overflow-y: auto; padding: 22px; display: flex; flex-direction: column; gap: 18px; }
+    .main-content::-webkit-scrollbar { width: 3px; }
+    .main-content::-webkit-scrollbar-thumb { background: var(--border); }
+
+    /* Tab views */
+    .tab-view { display: none; flex-direction: column; gap: 18px; animation: fadeIn .25s ease; }
+    .tab-view.active { display: flex; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ── SECTION HEADER ── */
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 2px;
+    }
+    .section-title {
+      font-family: var(--font-head);
+      font-size: 1.15rem; font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+    .section-title span { color: var(--accent); }
+    .section-sub { font-size: 0.6rem; color: var(--muted); margin-top: 2px; letter-spacing: 0.08em; }
+
+    /* ── STAT CARDS ── */
+    .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .stat-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      position: relative; overflow: hidden;
+      transition: transform .2s, border-color .2s;
+    }
+    .stat-card:hover { transform: translateY(-2px); border-color: var(--border2); }
+    .stat-card::after {
+      content: '';
+      position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+    }
+    .stat-card.green::after { background: linear-gradient(90deg, transparent, var(--accent), transparent); }
+    .stat-card.blue::after  { background: linear-gradient(90deg, transparent, var(--accent2), transparent); }
+    .stat-card.orange::after{ background: linear-gradient(90deg, transparent, var(--accent3), transparent); }
+    .stat-card.purple::after{ background: linear-gradient(90deg, transparent, var(--accent4), transparent); }
+    .stat-label { font-size: 0.57rem; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+    .stat-value { font-family: var(--font-head); font-size: 2rem; font-weight: 800; line-height: 1; }
+    .stat-card.green .stat-value { color: var(--accent); }
+    .stat-card.blue  .stat-value { color: var(--accent2); }
+    .stat-card.orange .stat-value{ color: var(--accent3); }
+    .stat-card.purple .stat-value{ color: var(--accent4); }
+    .stat-delta { font-size: 0.6rem; color: var(--muted); margin-top: 6px; display: flex; align-items: center; gap: 4px; }
+    .delta-up   { color: var(--accent); }
+    .delta-down { color: var(--danger); }
+    .stat-icon {
+      position: absolute; right: 14px; top: 14px;
+      font-size: 1.4rem; opacity: 0.12;
+    }
+
+    /* ── PANELS ── */
+    .panel-row { display: grid; gap: 14px; }
+    .panel-row.col-2 { grid-template-columns: 1fr 1fr; }
+    .panel-row.col-3 { grid-template-columns: 2fr 1fr; }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .panel-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .panel-title { font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text); }
+    .panel-body { padding: 0; }
+
+    /* ── PILL / BADGE ── */
+    .badge {
+      padding: 2px 8px; border-radius: 20px;
+      font-size: 0.55rem; letter-spacing: 0.08em; text-transform: uppercase;
+      font-weight: 700;
+    }
+    .badge.online  { background: rgba(0,229,160,0.12); color: var(--accent); border: 1px solid rgba(0,229,160,0.25); }
+    .badge.offline { background: rgba(255,71,87,0.12);  color: var(--danger); border: 1px solid rgba(255,71,87,0.25); }
+    .badge.idle    { background: rgba(255,165,2,0.12);  color: var(--warn);   border: 1px solid rgba(255,165,2,0.25); }
+    .badge.admin   { background: rgba(255,107,53,0.12); color: var(--accent3);border: 1px solid rgba(255,107,53,0.25); }
+    .badge.viewer  { background: rgba(0,150,255,0.12);  color: var(--accent2);border: 1px solid rgba(0,150,255,0.25); }
+
+    /* ── TABLE ── */
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th {
+      font-size: 0.56rem; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--muted); padding: 10px 16px;
+      text-align: left; border-bottom: 1px solid var(--border);
+      background: rgba(0,0,0,.15);
+    }
+    .data-table td {
+      padding: 10px 16px; font-size: 0.7rem;
+      border-bottom: 1px solid rgba(31,45,61,0.5);
+      vertical-align: middle;
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .user-cell { display: flex; align-items: center; gap: 10px; }
+    .user-avatar-sm {
+      width: 26px; height: 26px; border-radius: 50%;
+      display: grid; place-items: center;
+      font-size: 0.55rem; font-weight: 700;
+      flex-shrink: 0;
+    }
+    .user-name { font-size: 0.72rem; color: var(--text); }
+    .user-email { font-size: 0.58rem; color: var(--muted); margin-top: 1px; }
+    .action-btn {
+      padding: 4px 10px; border-radius: 6px;
+      font-size: 0.58rem; cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface); color: var(--muted);
+      transition: all .15s; font-family: var(--font-mono);
+      margin-right: 4px;
+    }
+    .action-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .action-btn.danger:hover { border-color: var(--danger); color: var(--danger); }
+
+    /* ── LOG ENTRIES ── */
+    .log-list { max-height: 320px; overflow-y: auto; }
+    .log-list::-webkit-scrollbar { width: 3px; }
+    .log-list::-webkit-scrollbar-thumb { background: var(--border); }
+    .log-entry {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 10px 16px;
+      border-bottom: 1px solid rgba(31,45,61,0.4);
+      transition: background .15s;
+    }
+    .log-entry:hover { background: rgba(255,255,255,0.02); }
+    .log-entry:last-child { border-bottom: none; }
+    .log-level {
+      width: 6px; height: 6px; border-radius: 50%;
+      margin-top: 5px; flex-shrink: 0;
+    }
+    .log-level.info    { background: var(--accent2); box-shadow: 0 0 5px var(--accent2); }
+    .log-level.success { background: var(--accent);  box-shadow: 0 0 5px var(--accent); }
+    .log-level.warn    { background: var(--warn);    box-shadow: 0 0 5px var(--warn); }
+    .log-level.error   { background: var(--danger);  box-shadow: 0 0 5px var(--danger); }
+    .log-time { font-size: 0.58rem; color: var(--muted); white-space: nowrap; margin-top: 1px; }
+    .log-msg  { font-size: 0.68rem; color: var(--text); flex: 1; line-height: 1.5; }
+    .log-user { font-size: 0.6rem; color: var(--accent); margin-top: 2px; }
+    .log-filter-row {
+      display: flex; gap: 6px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(0,0,0,.1);
+    }
+    .filter-chip {
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 0.56rem; cursor: pointer;
+      border: 1px solid var(--border);
+      background: transparent; color: var(--muted);
+      transition: all .15s; font-family: var(--font-mono);
+      letter-spacing: 0.06em; text-transform: uppercase;
+    }
+    .filter-chip.active { border-color: var(--accent); color: var(--accent); background: rgba(0,229,160,0.08); }
+    .filter-chip.warn.active  { border-color: var(--warn); color: var(--warn); background: rgba(255,165,2,0.08); }
+    .filter-chip.error.active { border-color: var(--danger); color: var(--danger); background: rgba(255,71,87,0.08); }
+
+    /* ── MARKERS PANEL ── */
+    .marker-form { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-label { font-size: 0.58rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+    .form-input {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 8px 11px;
+      font-family: var(--font-mono);
+      font-size: 0.7rem; color: var(--text);
+      transition: border-color .2s; outline: none;
+      width: 100%;
+    }
+    .form-input:focus { border-color: var(--accent); }
+    .form-input::placeholder { color: var(--muted2); }
+    select.form-input { cursor: pointer; }
+    textarea.form-input { resize: vertical; min-height: 70px; }
+    .btn {
+      padding: 9px 18px; border-radius: 8px;
+      font-family: var(--font-mono); font-size: 0.68rem;
+      cursor: pointer; border: none; transition: all .2s;
+      letter-spacing: 0.06em;
+    }
+    .btn-primary {
+      background: var(--accent); color: var(--bg);
+      font-weight: 700;
+    }
+    .btn-primary:hover { background: #00ffb3; transform: translateY(-1px); }
+    .btn-ghost {
+      background: transparent; color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { border-color: var(--border2); color: var(--text); }
+
+    .marker-list { max-height: 220px; overflow-y: auto; }
+    .marker-list::-webkit-scrollbar { width: 3px; }
+    .marker-list::-webkit-scrollbar-thumb { background: var(--border); }
+    .marker-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 16px;
+      border-bottom: 1px solid rgba(31,45,61,0.4);
+      transition: background .15s;
+    }
+    .marker-row:hover { background: rgba(255,255,255,0.025); }
+    .marker-row:last-child { border-bottom: none; }
+    .marker-color-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .marker-info { flex: 1; }
+    .marker-title { font-size: 0.7rem; color: var(--text); }
+    .marker-coords { font-size: 0.58rem; color: var(--muted); margin-top: 2px; }
+    .marker-type { font-size: 0.56rem; }
+
+    /* ── ACTIVITY FEED ── */
+    .activity-item {
+      display: flex; align-items: flex-start; gap: 11px;
+      padding: 11px 16px;
+      border-bottom: 1px solid rgba(31,45,61,0.4);
+    }
+    .activity-item:last-child { border-bottom: none; }
+    .activity-icon {
+      width: 28px; height: 28px; border-radius: 8px;
+      display: grid; place-items: center; font-size: 0.8rem;
+      flex-shrink: 0; margin-top: 1px;
+    }
+    .activity-text { flex: 1; font-size: 0.68rem; color: var(--text); line-height: 1.5; }
+    .activity-time { font-size: 0.58rem; color: var(--muted); }
+    .activity-actor { color: var(--accent); }
+
+    /* ── SETTINGS / PERKS ── */
+    .perk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px; }
+    .perk-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      display: flex; align-items: flex-start; gap: 12px;
+      transition: border-color .2s;
+    }
+    .perk-card:hover { border-color: var(--border2); }
+    .perk-icon {
+      width: 36px; height: 36px; border-radius: 9px;
+      display: grid; place-items: center; font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .perk-info { flex: 1; }
+    .perk-name { font-size: 0.72rem; color: var(--text); margin-bottom: 3px; }
+    .perk-desc { font-size: 0.6rem; color: var(--muted); line-height: 1.5; }
+    .toggle {
+      width: 34px; height: 18px;
+      background: var(--border);
+      border-radius: 20px; cursor: pointer;
+      position: relative; transition: background .2s;
+      flex-shrink: 0; margin-top: 2px;
+    }
+    .toggle.on { background: var(--accent); }
+    .toggle::after {
+      content: ''; position: absolute;
+      width: 12px; height: 12px; border-radius: 50%;
+      background: #fff; top: 3px; left: 3px;
+      transition: transform .2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,.3);
+    }
+    .toggle.on::after { transform: translateX(16px); }
+
+    /* ── SEARCH BAR ── */
+    .search-wrap {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .search-input {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 12px 7px 32px;
+      font-family: var(--font-mono);
+      font-size: 0.68rem; color: var(--text);
+      outline: none; transition: border-color .2s;
+      width: 220px; position: relative;
+    }
+    .search-input:focus { border-color: var(--accent); }
+    .search-input::placeholder { color: var(--muted2); }
+    .search-wrap-inner { position: relative; }
+    .search-icon {
+      position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+      color: var(--muted); font-size: 0.75rem; pointer-events: none;
+    }
+
+    /* ── CHART BAR ── */
+    .mini-chart { display: flex; align-items: flex-end; gap: 4px; height: 60px; padding: 12px 16px 0; }
+    .chart-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .chart-bar { width: 100%; border-radius: 3px 3px 0 0; transition: opacity .2s; cursor: pointer; }
+    .chart-bar:hover { opacity: 0.8; }
+    .chart-label { font-size: 0.5rem; color: var(--muted); }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.72); backdrop-filter: blur(5px);
+      z-index: 2000; align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      width: 420px; max-width: 92vw;
+      box-shadow: 0 20px 60px rgba(0,0,0,.6);
+      animation: popIn .22s ease both;
+    }
+    @keyframes popIn { from{transform:scale(.93);opacity:0} to{transform:scale(1);opacity:1} }
+    .modal-title { font-family: var(--font-head); font-size: 1rem; font-weight: 800; margin-bottom: 16px; }
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+
+    /* ── TOAST ── */
+    .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 3000; display: flex; flex-direction: column; gap: 8px; }
+    .toast {
+      background: var(--panel2); border: 1px solid var(--border);
+      border-radius: 9px; padding: 10px 16px;
+      font-size: 0.68rem; color: var(--text);
+      display: flex; align-items: center; gap: 10px;
+      box-shadow: 0 8px 25px rgba(0,0,0,.4);
+      animation: slideIn .25s ease;
+      min-width: 220px;
+    }
+    @keyframes slideIn { from{transform:translateX(30px);opacity:0} to{transform:translateX(0);opacity:1} }
+    .toast.success { border-left: 3px solid var(--accent); }
+    .toast.error   { border-left: 3px solid var(--danger); }
+    .toast.warn    { border-left: 3px solid var(--warn); }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .stat-grid { grid-template-columns: repeat(2,1fr); }
+      .panel-row.col-2, .panel-row.col-3 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="topbar-logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#0b0f14" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="10" r="3"/>
+        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+      </svg>
+    </div>
+    <span class="logo-text">Wit<span>her</span></span>
+  </div>
+
+  <div class="topbar-center">
+    <div class="admin-dot"></div>
+    Admin Console
+  </div>
+
+  <div class="topbar-right">
+    <div class="topbar-time" id="clock">--:--:--</div>
+    <div class="admin-avatar" title="Admin User">AD</div>
+  </div>
+</header>
+
+<!-- APP BODY -->
+<div class="app-body">
+
+  <!-- NAV SIDEBAR -->
+  <nav class="nav-sidebar">
+    <div class="nav-btn active" data-tab="overview" onclick="switchTab('overview', this)" title="Overview">
+      🏠
+      <span class="nav-tooltip">Overview</span>
+    </div>
+    <div class="nav-btn" data-tab="users" onclick="switchTab('users', this)" title="Users">
+      👥
+      <span class="nav-tooltip">Users</span>
+    </div>
+    <div class="nav-btn" data-tab="logs" onclick="switchTab('logs', this)" title="Logs">
+      📋
+      <span class="nav-tooltip">Activity Logs</span>
+    </div>
+    <div class="nav-btn" data-tab="markers" onclick="switchTab('markers', this)" title="Markers">
+      📍
+      <span class="nav-tooltip">Map Markers</span>
+    </div>
+    <div class="nav-divider"></div>
+    <div class="nav-btn" data-tab="settings" onclick="switchTab('settings', this)" title="Settings">
+      ⚙️
+      <span class="nav-tooltip">Settings & Perks</span>
+    </div>
+    <div class="nav-btn" onclick="goToMap()" title="Map View">
+      🗺️
+      <span class="nav-tooltip">Field Monitor</span>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+
+    <!-- ════ OVERVIEW TAB ════ -->
+    <div class="tab-view active" id="tab-overview">
+
+      <div class="section-header">
+        <div>
+          <div class="section-title">System <span>Overview</span></div>
+          <div class="section-sub">Real-time field monitor stats — updated every 5s</div>
+        </div>
+        <div class="search-wrap">
+          <span style="font-size:0.62rem;color:var(--muted)">Last sync:</span>
+          <span id="last-sync" style="font-size:0.62rem;color:var(--accent)">--:--:--</span>
+        </div>
+      </div>
+
+      <!-- Stat cards -->
+      <div class="stat-grid">
+        <div class="stat-card green">
+          <div class="stat-icon">👤</div>
+          <div class="stat-label">Active Users</div>
+          <div class="stat-value" id="stat-users">12</div>
+          <div class="stat-delta"><span class="delta-up">↑ 3</span> since yesterday</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-icon">📍</div>
+          <div class="stat-label">Map Markers</div>
+          <div class="stat-value" id="stat-markers">47</div>
+          <div class="stat-delta"><span class="delta-up">↑ 8</span> this week</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-icon">⚡</div>
+          <div class="stat-label">Events Today</div>
+          <div class="stat-value" id="stat-events">284</div>
+          <div class="stat-delta"><span class="delta-up">↑ 12%</span> vs avg</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-icon">🌡️</div>
+          <div class="stat-label">Avg Temperature</div>
+          <div class="stat-value" id="stat-temp">28°</div>
+          <div class="stat-delta"><span class="delta-down">↓ 1.2°</span> from peak</div>
+        </div>
+      </div>
+
+      <!-- Charts + Activity -->
+      <div class="panel-row col-3">
+        <div class="panel">
+          <div class="panel-head">
+            <span class="panel-title">Event Activity — Last 7 Days</span>
+            <span class="badge online">Live</span>
+          </div>
+          <div id="activity-chart" class="mini-chart"></div>
+          <div style="padding:0 16px 14px;font-size:0.58rem;color:var(--muted)">Events logged per day across all users</div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <span class="panel-title">Recent Activity</span>
+          </div>
+          <div class="panel-body" id="recent-activity"></div>
+        </div>
+      </div>
+
+      <!-- Online users quick -->
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-title">Connected Sessions</span>
+          <span id="online-count" class="badge online">3 Online</span>
+        </div>
+        <table class="data-table" id="sessions-table">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Location</th>
+              <th>Last Active</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="sessions-body"></tbody>
+        </table>
+      </div>
+
+    </div>
+    <!-- end overview -->
+
+    <!-- ════ USERS TAB ════ -->
+    <div class="tab-view" id="tab-users">
+      <div class="section-header">
+        <div>
+          <div class="section-title">User <span>Management</span></div>
+          <div class="section-sub">Manage accounts, roles, and permissions</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="search-wrap-inner">
+            <span class="search-icon">🔍</span>
+            <input class="search-input" id="user-search" type="text" placeholder="Search users..." oninput="filterUsers()" />
+          </div>
+          <button class="btn btn-primary" onclick="openAddUserModal()">+ Add User</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <span class="panel-title">All Users</span>
+          <span id="user-count-badge" class="badge viewer">8 Total</span>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Joined</th>
+              <th>Last Login</th>
+              <th>Markers</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="users-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ════ LOGS TAB ════ -->
+    <div class="tab-view" id="tab-logs">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Activity <span>Logs</span></div>
+          <div class="section-sub">Full audit trail of all system events</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-ghost" onclick="exportLogs()">⬇ Export</button>
+          <button class="btn btn-ghost" onclick="clearLogs()">🗑 Clear</button>
+        </div>
+      </div>
+
+      <div class="panel-row col-2">
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">System Events</span></div>
+          <div class="log-filter-row" id="log-filters">
+            <button class="filter-chip active" data-filter="all" onclick="setLogFilter('all',this)">All</button>
+            <button class="filter-chip active" data-filter="info" onclick="setLogFilter('info',this)">Info</button>
+            <button class="filter-chip warn active" data-filter="warn" onclick="setLogFilter('warn',this)">Warn</button>
+            <button class="filter-chip error active" data-filter="error" onclick="setLogFilter('error',this)">Error</button>
+          </div>
+          <div class="log-list" id="log-list"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">User Sessions</span></div>
+          <div class="log-list" id="session-log"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><span class="panel-title">Sensor Readings Log</span></div>
+        <table class="data-table">
+          <thead>
+            <tr><th>Timestamp</th><th>Temperature</th><th>Humidity</th><th>Recorded By</th><th>Status</th></tr>
+          </thead>
+          <tbody id="sensor-log-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ════ MARKERS TAB ════ -->
+    <div class="tab-view" id="tab-markers">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Map <span>Markers</span></div>
+          <div class="section-sub">Add and manage field location markers</div>
+        </div>
+      </div>
+
+      <div class="panel-row col-2">
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">Add New Marker</span></div>
+          <div class="marker-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Latitude</label>
+                <input class="form-input" id="m-lat" type="text" placeholder="e.g. 8.36031" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Longitude</label>
+                <input class="form-input" id="m-lng" type="text" placeholder="e.g. 124.86817" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Marker Label</label>
+              <input class="form-input" id="m-label" type="text" placeholder="e.g. Field Station Alpha" />
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Type</label>
+                <select class="form-input" id="m-type">
+                  <option>Sensor</option>
+                  <option>Boundary</option>
+                  <option>Hazard</option>
+                  <option>Waypoint</option>
+                  <option>POI</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Color</label>
+                <select class="form-input" id="m-color">
+                  <option value="#00e5a0">Green (Sensor)</option>
+                  <option value="#0096ff">Blue (Info)</option>
+                  <option value="#ff6b35">Orange (Hazard)</option>
+                  <option value="#ff4757">Red (Alert)</option>
+                  <option value="#c084fc">Purple (Zone)</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Description</label>
+              <textarea class="form-input" id="m-desc" placeholder="Marker description shown on click..."></textarea>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-primary" onclick="addMarker()">📍 Add Marker</button>
+              <button class="btn btn-ghost" onclick="useCurrentCenter()">📡 Use Map Center</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <span class="panel-title">Existing Markers</span>
+            <span id="marker-count-badge" class="badge viewer">0 Markers</span>
+          </div>
+          <div class="marker-list" id="marker-list"></div>
+          <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px">
+            <button class="btn btn-ghost" onclick="exportMarkers()" style="font-size:0.62rem">⬇ Export JSON</button>
+            <button class="btn btn-ghost" onclick="clearAllMarkers()" style="font-size:0.62rem;color:var(--muted)">🗑 Clear All</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ SETTINGS TAB ════ -->
+    <div class="tab-view" id="tab-settings">
+      <div class="section-header">
+        <div>
+          <div class="section-title">Settings <span>&</span> Perks</div>
+          <div class="section-sub">System configuration and admin privileges</div>
+        </div>
+      </div>
+
+      <div class="panel-row col-2">
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">Feature Toggles</span></div>
+          <div class="perk-grid">
+            <div class="perk-card">
+              <div class="perk-icon" style="background:rgba(0,229,160,0.1)">🔴</div>
+              <div class="perk-info">
+                <div class="perk-name">Live Feed</div>
+                <div class="perk-desc">Real-time sensor data streaming every 5 seconds</div>
+              </div>
+              <div class="toggle on" onclick="togglePerk(this)"></div>
+            </div>
+            <div class="perk-card">
+              <div class="perk-icon" style="background:rgba(0,150,255,0.1)">🛰️</div>
+              <div class="perk-info">
+                <div class="perk-name">Satellite Layer</div>
+                <div class="perk-desc">ESRI high-resolution satellite map tiles</div>
+              </div>
+              <div class="toggle on" onclick="togglePerk(this)"></div>
+            </div>
+            <div class="perk-card">
+              <div class="perk-icon" style="background:rgba(255,107,53,0.1)">🔔</div>
+              <div class="perk-info">
+                <div class="perk-name">Alert System</div>
+                <div class="perk-desc">Threshold breach notifications for sensors</div>
+              </div>
+              <div class="toggle" onclick="togglePerk(this)"></div>
+            </div>
+            <div class="perk-card">
+              <div class="perk-icon" style="background:rgba(192,132,252,0.1)">📊</div>
+              <div class="perk-info">
+                <div class="perk-name">Analytics</div>
+                <div class="perk-desc">Extended data logging and trend analysis</div>
+              </div>
+              <div class="toggle on" onclick="togglePerk(this)"></div>
+            </div>
+            <div class="perk-card">
+              <div class="perk-icon" style="background:rgba(255,71,87,0.1)">🔒</div>
+              <div class="perk-info">
+                <div class="perk-name">Geo-Fence Alerts</div>
+                <div class="perk-desc">Trigger events when markers enter zones</div>
+              </div>
+              <div class="toggle" onclick="togglePerk(this)"></div>
+            </div>
+            <div class="perk-card">
+              <div class="perk-icon" style="background:rgba(0,229,160,0.1)">🌐</div>
+              <div class="perk-info">
+                <div class="perk-name">Public API</div>
+                <div class="perk-desc">Allow external access to sensor endpoints</div>
+              </div>
+              <div class="toggle" onclick="togglePerk(this)"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">System Configuration</span></div>
+          <div class="marker-form">
+            <div class="form-group">
+              <label class="form-label">Sensor Refresh Rate</label>
+              <select class="form-input">
+                <option>Every 5 seconds</option>
+                <option>Every 10 seconds</option>
+                <option>Every 30 seconds</option>
+                <option>Every 60 seconds</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Default Map Center (Lat)</label>
+              <input class="form-input" type="text" value="8.36031" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Default Map Center (Lng)</label>
+              <input class="form-input" type="text" value="124.86817" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Alert Email</label>
+              <input class="form-input" type="email" placeholder="admin@example.com" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Temperature Alert Threshold (°C)</label>
+              <input class="form-input" type="number" value="35" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Humidity Alert Threshold (%)</label>
+              <input class="form-input" type="number" value="90" />
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-primary" onclick="saveSettings()">💾 Save Config</button>
+              <button class="btn btn-ghost">↩ Reset Defaults</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin perks -->
+      <div class="panel">
+        <div class="panel-head"><span class="panel-title">Admin Privileges</span></div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px">
+          <div class="perk-card" style="flex-direction:column;text-align:center;gap:8px;align-items:center;cursor:pointer" onclick="showToast('Exporting full dataset...','success')">
+            <div class="perk-icon" style="background:rgba(0,229,160,0.1);width:44px;height:44px;font-size:1.3rem">📦</div>
+            <div class="perk-name">Export All Data</div>
+            <div class="perk-desc">Download complete sensor + marker dataset as JSON</div>
+          </div>
+          <div class="perk-card" style="flex-direction:column;text-align:center;gap:8px;align-items:center;cursor:pointer" onclick="showToast('Database reset scheduled','warn')">
+            <div class="perk-icon" style="background:rgba(255,165,2,0.1);width:44px;height:44px;font-size:1.3rem">🔄</div>
+            <div class="perk-name">Reset Database</div>
+            <div class="perk-desc">Wipe all sensor history (keeps markers & users)</div>
+          </div>
+          <div class="perk-card" style="flex-direction:column;text-align:center;gap:8px;align-items:center;cursor:pointer" onclick="showToast('System health check: All OK','success')">
+            <div class="perk-icon" style="background:rgba(0,150,255,0.1);width:44px;height:44px;font-size:1.3rem">🩺</div>
+            <div class="perk-name">Health Check</div>
+            <div class="perk-desc">Run diagnostics on all sensors and connections</div>
+          </div>
+          <div class="perk-card" style="flex-direction:column;text-align:center;gap:8px;align-items:center;cursor:pointer" onclick="showToast('Broadcast sent to all users','success')">
+            <div class="perk-icon" style="background:rgba(192,132,252,0.1);width:44px;height:44px;font-size:1.3rem">📢</div>
+            <div class="perk-name">Broadcast Alert</div>
+            <div class="perk-desc">Send a system-wide notification to all users</div>
+          </div>
+          <div class="perk-card" style="flex-direction:column;text-align:center;gap:8px;align-items:center;cursor:pointer" onclick="showToast('Backup created successfully','success')">
+            <div class="perk-icon" style="background:rgba(0,229,160,0.1);width:44px;height:44px;font-size:1.3rem">💾</div>
+            <div class="perk-name">Create Backup</div>
+            <div class="perk-desc">Snapshot current state to backup storage</div>
+          </div>
+          <div class="perk-card" style="flex-direction:column;text-align:center;gap:8px;align-items:center;cursor:pointer" onclick="showToast('API key regenerated','warn')">
+            <div class="perk-icon" style="background:rgba(255,71,87,0.1);width:44px;height:44px;font-size:1.3rem">🔑</div>
+            <div class="perk-name">Regen API Key</div>
+            <div class="perk-desc">Invalidate current API keys and generate new ones</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ADD USER MODAL -->
+<div class="modal-overlay" id="add-user-modal">
+  <div class="modal-box">
+    <div class="modal-title">Add New User</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input class="form-input" id="new-user-name" type="text" placeholder="Juan dela Cruz" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" id="new-user-email" type="email" placeholder="juan@example.com" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Role</label>
+          <select class="form-input" id="new-user-role">
+            <option>Viewer</option>
+            <option>Operator</option>
+            <option>Admin</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-input" id="new-user-status">
+            <option>Active</option>
+            <option>Inactive</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('add-user-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="createUser()">Create User</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+  /* ── CLOCK ── */
+  const tick = () => {
+    const t = new Date().toLocaleTimeString('en-US',{hour12:false});
+    document.getElementById('clock').textContent = t;
+    document.getElementById('last-sync').textContent = t;
+  };
+  setInterval(tick, 1000); tick();
+
+  /* ── TAB SWITCHING ── */
+  function switchTab(id, btn) {
+    document.querySelectorAll('.tab-view').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + id).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  function goToMap() {
+    showToast('Switching to Field Monitor...', 'success');
+    // window.location.href = 'index.html';
+  }
+
+  /* ── DATA ── */
+  let users = [
+    { id:1, name:'Maria Santos', email:'maria@field.ph', role:'Admin', status:'online', joined:'2024-01-15', lastLogin:'2 min ago', markers:12, color:'#00e5a0' },
+    { id:2, name:'Jose Reyes', email:'jose@field.ph', role:'Operator', status:'online', joined:'2024-02-20', lastLogin:'8 min ago', markers:7, color:'#0096ff' },
+    { id:3, name:'Ana Cruz', email:'ana@field.ph', role:'Viewer', status:'idle', joined:'2024-03-10', lastLogin:'1 hr ago', markers:3, color:'#c084fc' },
+    { id:4, name:'Carlos Diaz', email:'carlos@field.ph', role:'Operator', status:'offline', joined:'2024-03-22', lastLogin:'Yesterday', markers:18, color:'#ff6b35' },
+    { id:5, name:'Rosa Lim', email:'rosa@field.ph', role:'Viewer', status:'online', joined:'2024-04-05', lastLogin:'Just now', markers:2, color:'#ffa502' },
+    { id:6, name:'Ben Torres', email:'ben@field.ph', role:'Viewer', status:'offline', joined:'2024-05-01', lastLogin:'3 days ago', markers:5, color:'#ff4757' },
+    { id:7, name:'Lily Chan', email:'lily@field.ph', role:'Operator', status:'idle', joined:'2024-06-12', lastLogin:'30 min ago', markers:9, color:'#00e5a0' },
+    { id:8, name:'Mark Uy', email:'mark@field.ph', role:'Viewer', status:'offline', joined:'2024-07-03', lastLogin:'1 week ago', markers:1, color:'#0096ff' },
+  ];
+
+  let markers = [
+    { lat:'8.36031', lng:'124.86817', label:'Field Station Alpha', type:'Sensor', color:'#00e5a0', desc:'Primary temperature/humidity sensor' },
+    { lat:'8.36120', lng:'124.86950', label:'North Boundary', type:'Boundary', color:'#0096ff', desc:'Field northern perimeter point' },
+    { lat:'8.35990', lng:'124.86700', label:'Hazard Zone 1', type:'Hazard', color:'#ff4757', desc:'Flooding risk area — monitor closely' },
+  ];
+
+  const sysLogs = [
+    { level:'success', time:'14:32:11', msg:'Sensor data received from Station Alpha', user:'System' },
+    { level:'info',    time:'14:31:55', msg:'User maria@field.ph logged in', user:'Auth' },
+    { level:'info',    time:'14:30:00', msg:'Map tiles loaded successfully', user:'Map' },
+    { level:'warn',    time:'14:28:43', msg:'Humidity reading above 85% threshold', user:'Sensor' },
+    { level:'info',    time:'14:27:12', msg:'New marker added: Field Station Alpha', user:'Admin' },
+    { level:'error',   time:'14:25:30', msg:'pin.json fetch failed — file not found', user:'Map' },
+    { level:'success', time:'14:24:00', msg:'System startup complete', user:'System' },
+    { level:'info',    time:'14:22:47', msg:'User jose@field.ph logged in', user:'Auth' },
+    { level:'warn',    time:'14:20:01', msg:'Temperature spike detected: 33.4°C', user:'Sensor' },
+    { level:'info',    time:'14:18:55', msg:'Admin dashboard accessed', user:'Admin' },
+  ];
+
+  const sessionLogs = [
+    { user:'Maria Santos', action:'Logged in', time:'14:32:11', ip:'192.168.1.10' },
+    { user:'Jose Reyes',   action:'Viewed map', time:'14:29:00', ip:'192.168.1.14' },
+    { user:'Ana Cruz',     action:'Downloaded data', time:'14:15:30', ip:'192.168.1.22' },
+    { user:'Rosa Lim',     action:'Added marker', time:'14:05:10', ip:'192.168.1.33' },
+    { user:'Lily Chan',    action:'Logged in', time:'13:55:44', ip:'192.168.1.18' },
+    { user:'Carlos Diaz',  action:'Logged out', time:'13:40:00', ip:'192.168.1.9' },
+  ];
+
+  /* ── RENDER FUNCTIONS ── */
+  function initials(name) { return name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase(); }
+
+  function renderUsers(list) {
+    const body = document.getElementById('users-body');
+    body.innerHTML = list.map(u => `
+      <tr>
+        <td>
+          <div class="user-cell">
+            <div class="user-avatar-sm" style="background:${u.color}20;color:${u.color};border:1px solid ${u.color}40">${initials(u.name)}</div>
+            <div>
+              <div class="user-name">${u.name}</div>
+              <div class="user-email">${u.email}</div>
+            </div>
+          </div>
+        </td>
+        <td><span class="badge ${u.role==='Admin'?'admin':'viewer'}">${u.role}</span></td>
+        <td><span class="badge ${u.status}">${u.status}</span></td>
+        <td style="color:var(--muted);font-size:.65rem">${u.joined}</td>
+        <td style="color:var(--muted);font-size:.65rem">${u.lastLogin}</td>
+        <td style="color:var(--accent2)">${u.markers}</td>
+        <td>
+          <button class="action-btn" onclick="showToast('Editing ${u.name}...','success')">Edit</button>
+          <button class="action-btn danger" onclick="removeUser(${u.id})">Remove</button>
+        </td>
+      </tr>
+    `).join('');
+    document.getElementById('user-count-badge').textContent = list.length + ' Total';
+  }
+
+  function renderSessions() {
+    const body = document.getElementById('sessions-body');
+    const online = users.filter(u => u.status !== 'offline');
+    body.innerHTML = online.map(u => `
+      <tr>
+        <td>
+          <div class="user-cell">
+            <div class="user-avatar-sm" style="background:${u.color}20;color:${u.color};border:1px solid ${u.color}40">${initials(u.name)}</div>
+            <div class="user-name">${u.name}</div>
+          </div>
+        </td>
+        <td><span class="badge ${u.role==='Admin'?'admin':'viewer'}">${u.role}</span></td>
+        <td><span class="badge ${u.status}">${u.status}</span></td>
+        <td style="color:var(--muted);font-size:.65rem">Manolo Fortich</td>
+        <td style="color:var(--muted);font-size:.65rem">${u.lastLogin}</td>
+        <td><button class="action-btn danger" onclick="showToast('Session terminated','warn')">Kick</button></td>
+      </tr>
+    `).join('');
+    document.getElementById('online-count').textContent = online.filter(u=>u.status==='online').length + ' Online';
+  }
+
+  function renderLogs() {
+    const list = document.getElementById('log-list');
+    list.innerHTML = sysLogs.map(l => `
+      <div class="log-entry log-entry-${l.level}">
+        <div class="log-level ${l.level}"></div>
+        <div style="flex:1">
+          <div class="log-msg">${l.msg}</div>
+          <div class="log-user">${l.user}</div>
+        </div>
+        <div class="log-time">${l.time}</div>
+      </div>
+    `).join('');
+
+    const sl = document.getElementById('session-log');
+    sl.innerHTML = sessionLogs.map(l => `
+      <div class="log-entry">
+        <div class="log-level info"></div>
+        <div style="flex:1">
+          <div class="log-msg"><span style="color:var(--accent)">${l.user}</span> — ${l.action}</div>
+          <div class="log-user">${l.ip}</div>
+        </div>
+        <div class="log-time">${l.time}</div>
+      </div>
+    `).join('');
+
+    // Sensor log
+    const sb = document.getElementById('sensor-log-body');
+    const readings = Array.from({length:8},(_,i)=>{
+      const d = new Date(); d.setMinutes(d.getMinutes()-i*5);
+      const t = (24+Math.random()*10).toFixed(1);
+      const h = (60+Math.random()*25).toFixed(1);
+      const ok = +t<32 && +h<85;
+      return `<tr>
+        <td style="color:var(--muted);font-size:.65rem">${d.toLocaleTimeString('en-US',{hour12:false})}</td>
+        <td style="color:var(--accent)">${t}°C</td>
+        <td style="color:var(--accent2)">${h}%</td>
+        <td style="font-size:.65rem">System Auto</td>
+        <td><span class="badge ${ok?'online':'idle'}">${ok?'Normal':'Warning'}</span></td>
+      </tr>`;
+    });
+    sb.innerHTML = readings.join('');
+  }
+
+  function renderMarkers() {
+    const list = document.getElementById('marker-list');
+    if (markers.length === 0) {
+      list.innerHTML = '<div style="padding:20px 16px;color:var(--muted);font-size:.68rem;text-align:center">No markers added yet</div>';
+    } else {
+      list.innerHTML = markers.map((m,i) => `
+        <div class="marker-row">
+          <div class="marker-color-dot" style="background:${m.color}"></div>
+          <div class="marker-info">
+            <div class="marker-title">${m.label}</div>
+            <div class="marker-coords">${m.lat}, ${m.lng}</div>
+          </div>
+          <span class="badge viewer" style="font-size:.5rem">${m.type}</span>
+          <button class="action-btn danger" onclick="deleteMarker(${i})" style="margin-left:4px">✕</button>
+        </div>
+      `).join('');
+    }
+    document.getElementById('marker-count-badge').textContent = markers.length + ' Markers';
+    document.getElementById('stat-markers').textContent = markers.length + 47;
+  }
+
+  function renderActivity() {
+    const items = [
+      { icon:'📍', bg:'rgba(0,229,160,0.1)', text:'<span class="activity-actor">Maria Santos</span> added marker "Station Beta"', time:'2 min ago' },
+      { icon:'🌡️', bg:'rgba(255,165,2,0.1)',  text:'<span style="color:var(--warn)">Temp alert</span> — 33.4°C on Station Alpha', time:'8 min ago' },
+      { icon:'👤', bg:'rgba(0,150,255,0.1)',  text:'<span class="activity-actor">Jose Reyes</span> logged into the system', time:'10 min ago' },
+      { icon:'📊', bg:'rgba(192,132,252,0.1)',text:'Sensor data batch received — 24 readings', time:'15 min ago' },
+      { icon:'🔒', bg:'rgba(255,71,87,0.1)',  text:'Failed login attempt from 192.168.1.99', time:'22 min ago' },
+    ];
+    document.getElementById('recent-activity').innerHTML = items.map(a => `
+      <div class="activity-item">
+        <div class="activity-icon" style="background:${a.bg}">${a.icon}</div>
+        <div style="flex:1">
+          <div class="activity-text">${a.text}</div>
+          <div class="activity-time">${a.time}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderChart() {
+    const vals = [142, 198, 165, 221, 180, 247, 284];
+    const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const max = Math.max(...vals);
+    const wrap = document.getElementById('activity-chart');
+    wrap.innerHTML = vals.map((v,i) => `
+      <div class="chart-bar-wrap">
+        <div class="chart-bar" style="height:${Math.round((v/max)*44)}px;background:${i===6?'var(--accent)':'var(--border2)'};opacity:${i===6?1:0.6}"></div>
+        <div class="chart-label">${days[i]}</div>
+      </div>
+    `).join('');
+  }
+
+  /* ── INTERACTIONS ── */
+  function filterUsers() {
+    const q = document.getElementById('user-search').value.toLowerCase();
+    renderUsers(q ? users.filter(u => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)) : users);
+  }
+
+  function removeUser(id) {
+    users = users.filter(u => u.id !== id);
+    renderUsers(users);
+    renderSessions();
+    showToast('User removed', 'warn');
+  }
+
+  function setLogFilter(f, btn) {
+    document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+    btn.classList.add('active');
+    const list = document.getElementById('log-list');
+    const filtered = f === 'all' ? sysLogs : sysLogs.filter(l => l.level === f || l.level === 'success' && f==='info');
+    list.innerHTML = filtered.map(l => `
+      <div class="log-entry">
+        <div class="log-level ${l.level}"></div>
+        <div style="flex:1">
+          <div class="log-msg">${l.msg}</div>
+          <div class="log-user">${l.user}</div>
+        </div>
+        <div class="log-time">${l.time}</div>
+      </div>
+    `).join('');
+  }
+
+  function addMarker() {
+    const lat = document.getElementById('m-lat').value.trim();
+    const lng = document.getElementById('m-lng').value.trim();
+    const label = document.getElementById('m-label').value.trim();
+    if (!lat || !lng || !label) { showToast('Please fill in Lat, Lng and Label', 'warn'); return; }
+    markers.push({
+      lat, lng, label,
+      type: document.getElementById('m-type').value,
+      color: document.getElementById('m-color').value,
+      desc: document.getElementById('m-desc').value
+    });
+    renderMarkers();
+    document.getElementById('m-lat').value='';
+    document.getElementById('m-lng').value='';
+    document.getElementById('m-label').value='';
+    document.getElementById('m-desc').value='';
+    showToast('Marker "' + label + '" added!', 'success');
+    sysLogs.unshift({ level:'info', time:new Date().toLocaleTimeString('en-US',{hour12:false}), msg:'New marker added: '+label, user:'Admin' });
+  }
+
+  function useCurrentCenter() {
+    document.getElementById('m-lat').value = '8.36031';
+    document.getElementById('m-lng').value = '124.86817';
+    showToast('Map center coordinates pasted', 'success');
+  }
+
+  function deleteMarker(i) {
+    const name = markers[i].label;
+    markers.splice(i, 1);
+    renderMarkers();
+    showToast('"' + name + '" removed', 'warn');
+  }
+
+  function clearAllMarkers() {
+    markers = [];
+    renderMarkers();
+    showToast('All markers cleared', 'warn');
+  }
+
+  function exportMarkers() {
+    const blob = new Blob([JSON.stringify(markers.map(m=>({latitude:m.lat,longitude:m.lng,message:`<strong>${m.label}</strong><br>${m.desc}`})),null,2)], {type:'application/json'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download='pin.json'; a.click();
+    showToast('Markers exported as pin.json', 'success');
+  }
+
+  function exportLogs() { showToast('Logs exported as CSV', 'success'); }
+  function clearLogs()  { showToast('Log history cleared', 'warn'); }
+  function saveSettings() { showToast('Configuration saved!', 'success'); }
+
+  function togglePerk(el) {
+    el.classList.toggle('on');
+    const name = el.closest('.perk-card').querySelector('.perk-name').textContent;
+    showToast(name + ' ' + (el.classList.contains('on') ? 'enabled' : 'disabled'), el.classList.contains('on') ? 'success' : 'warn');
+  }
+
+  function openAddUserModal() { document.getElementById('add-user-modal').classList.add('open'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+  function createUser() {
+    const name = document.getElementById('new-user-name').value.trim();
+    const email = document.getElementById('new-user-email').value.trim();
+    if (!name || !email) { showToast('Name and email required','warn'); return; }
+    const colors = ['#00e5a0','#0096ff','#c084fc','#ff6b35','#ffa502'];
+    users.push({ id: Date.now(), name, email,
+      role: document.getElementById('new-user-role').value,
+      status: document.getElementById('new-user-status').value==='Active'?'online':'offline',
+      joined: new Date().toISOString().split('T')[0], lastLogin:'Never', markers:0,
+      color: colors[Math.floor(Math.random()*colors.length)]
+    });
+    renderUsers(users);
+    renderSessions();
+    closeModal('add-user-modal');
+    document.getElementById('new-user-name').value='';
+    document.getElementById('new-user-email').value='';
+    showToast('User "' + name + '" created!', 'success');
+  }
+
+  /* ── TOAST ── */
+  function showToast(msg, type='success') {
+    const c = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = 'toast ' + type;
+    t.innerHTML = `<span>${type==='success'?'✓':type==='warn'?'⚠':'✕'}</span><span>${msg}</span>`;
+    c.appendChild(t);
+    setTimeout(() => { t.style.opacity='0'; t.style.transform='translateX(30px)'; t.style.transition='all .3s'; setTimeout(()=>t.remove(), 300); }, 2800);
+  }
+
+  /* ── CLOSE MODAL ON BACKDROP ── */
+  document.querySelectorAll('.modal-overlay').forEach(m => {
+    m.addEventListener('click', e => { if (e.target===m) m.classList.remove('open'); });
+  });
+
+  /* ── INIT ── */
+  renderUsers(users);
+  renderSessions();
+  renderLogs();
+  renderMarkers();
+  renderActivity();
+  renderChart();
+
+  // Live stat update
+  setInterval(() => {
+    document.getElementById('stat-events').textContent = 284 + Math.floor(Math.random()*5);
+    document.getElementById('stat-temp').textContent = (26+Math.random()*4).toFixed(0)+'°';
+  }, 5000);
+</script>
+</body>
+</html>
